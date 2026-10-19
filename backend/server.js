@@ -1,4 +1,5 @@
 const http = require('http');
+const mysql = require('mysql2');
 
 const PORT = process.env.PORT || 3000;
 
@@ -17,6 +18,19 @@ const server = http.createServer((req, res) => {
             message: "Nie znaleziono ścieżki"
         }));
     }
+});
+
+const connection = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME
+});
+
+connection.connect((err) => {
+  if (err) throw err;
+  console.log('Connected to MySQL Database!');
+  connection.end();
 });
 
 server.listen(PORT, () => {
