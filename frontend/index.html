@@ -1,7 +1,22 @@
 <html>
     <head>
+	<meta charset="utf-8">
     </head>
     <body>
 	<h2>Test połączenia z backendem</h2>
+	<p id="backend-status">Ładowanie danych z backendu...</p>
+
+	<script>
+	    fetch('/api/')
+		.then(response => response.json())
+		.then(data => {
+		    const status = document.getElementById('backend-status'); 
+		    status.innerText = "Odpowiedź z backendu: " + data.message;
+		})
+		.catch(error => {
+		    console.error("Błąd pobierania danych:", error);
+		    document.getElementById('backend-status').innerText = "Błąd połączenia z backendem."
+		});
+	</script>
     </body>
 </html>
