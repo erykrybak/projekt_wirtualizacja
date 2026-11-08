@@ -14,7 +14,9 @@ const pool = mysql.createPool({
 });
 
 const server = http.createServer((req, res) => {
+    #✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
     if (req.url === "/health" && req.method === "GET") {
+    #✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
         pool.query("SELECT 1", (err) => {
             if (err) {
                 res.writeHead(503, { "Content-Type": "application/json" });
