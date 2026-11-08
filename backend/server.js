@@ -13,51 +13,36 @@ const pool = mysql.createPool({
     queueLimit: 0,
 });
 
+const sendJSON = (res, statusCode, data) => {
+    res.writeHead(statusCode, {"Content-Type": "application/json; charset=utf-8"});
+    res.end(JSON.stringify(data));
+}
+
 const server = http.createServer((req, res) => {
+    
     #✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
     if (req.url === "/health" && req.method === "GET") {
     #✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
         pool.query("SELECT 1", (err) => {
             if (err) {
-                res.writeHead(503, { "Content-Type": "application/json" });
-                return res.end(
-                    JSON.stringify({
-                        status: "error",
-                        message: "Brak połączenia z bazą",
-                    }),
-                );
+                return sendJSON(res, 503, {status: "error", message: "Brak połączenia z bazą"});
             }
-            res.writeHead(200, { "Content-Type": "application/json" });
-            return res.end(
-                JSON.stringify({
-                    status: "ok",
-                    message: "Backend łączy się z bazą",
-                }),
-            );
+            return sendJSON(res, 200, {status: "ok", message: "Backend łączy się z bazą"});
         });
         return;
     }
     if (req.url === "/" || req.url === "/api" || req.url === "/api/") {
-        res.writeHead(200, {
-            "Content-Type": "application/json; charset=utf-8",
+        return sendJSON(res, 200, {
+            status: "success",
+            message: "Backend działa poprawnie!",
+            timestamp: new Date().toISOString(),
         });
-        res.end(
-            JSON.stringify({
-                status: "success",
-                message: "Backend działa poprawnie!",
-                timestamp: new Date().toISOString(),
-            }),
-        );
-        return;
     }
 
-    res.writeHead(404, { "Content-Type": "application/json; charset=utf-8" });
-    res.end(
-        JSON.stringify({
-            status: "error",
-            message: "Nie znaleziono ścieżki",
-        }),
-    );
+    sendJSON(res, 404, {
+        status: "error",
+        message: "Nie znaleziono ścieżki",
+    });
 });
 
 server.listen(PORT, () => {
