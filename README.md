@@ -12,6 +12,8 @@ docker compose up
 
 ## Dokumentacja
 
+### Budowa
+
 Frontend:
 - obraz kontenera: nginx
 - port: 8080:80
@@ -41,4 +43,110 @@ Database:
 Sieci:
 - `frontend-network` służąca do porozumiewania się frontendu z backendem 
 - `backend-network` odizoloana sieć służąca do porozumiewania się backendu z bazą danych
- 
+
+### Format wymiany danych
+1. Sprawdzenie stanu serwera i bazy
+- Endpoint: `GET /health`
+- Opis: sprawdzenie czy serwer odpowiada i czy ma poprawne połączenie z bazą danych
+- Odpowiedź `200 OK`:
+```json 
+{
+  "status": "ok",
+  "message": "Backend łączy się z bazą"
+}
+```
+- Odpowiedź `503 Service Unavailable`:
+```json
+{
+  "status": "error",
+  "message": "Brak połączenia z bazą"
+}
+```
+
+2. Pobieranie wszystkich przepisów 
+- Endpoint: `GET /api/recipes` 
+- Opis: Zwraca listę wszystkich przepisów z bazy danych
+- Odpowiedź `200 OK`:
+```json 
+[
+  {
+    "RecipeID": 1,
+    "Title": "Naleśniki",
+    "FileName": "nalesniki.md"
+  },
+  {
+    "RecipeID": 2,
+    "Title": "Spaghetti Bolognese",
+    "FileName": "spaghetti.md"
+  }
+]
+```
+- Odpowiedź `500 Internal Server Error`:
+```json
+{
+  "error": "Błąd bazy danych"
+}
+```
+
+3. Pobieranie konkretnego przepisu
+- Endpoint: `GET /api/recipes/:id`
+- Opis: Zwraca przepis o podanym id 
+- Odpowiedź `200 OK`:
+```json 
+{
+  "RecipeID": 1,
+  "Title": "Naleśniki",
+  "FileName": "nalesniki.md"
+}
+```
+- Odpowiedź `404 Not Found`:
+```json 
+{
+  "error": "Nie znaleziono przepisu"
+}
+```
+
+4. Dodawanie nowego przepisu 
+- Endpoint: `POST /api/recipes`
+- Nagłówki: `Content-Type: application/json`
+- Request Body:
+```json
+{
+  "Title": "Pizza Margharitta",
+  "FileName": "pizza_margharitta.md"
+}
+```
+- Odpowiedź `201 Created`:
+```json 
+{
+  "message": "Utworzono przepis",
+  "id": 3
+}
+```
+- Odpowiedź `400 Bad Request`:
+```json
+{
+  "error": "Pola 'Title' oraz 'FileName' są wymagane"
+}
+```
+```json
+{
+  "error": "Nieprawidłowy format JSON"
+}
+```
+
+5. Usuwanie przepisu
+- Endpoint: `DELETE /api/recipes/:id`
+- Opis: Usunięcie przepisu o wskazanym id z bazy danych 
+- Odpowiedź `200 OK`:
+```json
+{
+  "message": "Przepis został usunięty"
+}
+```
+- Odpowiedź `404 Not Found`:
+```json
+{
+  "error": "Nie znaleziono przepisu do usunięcia"
+}
+```
