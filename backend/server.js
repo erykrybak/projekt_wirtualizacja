@@ -1,6 +1,17 @@
 const http = require("http");
 const mysql = require("mysql2");
 
+const isNonEmptyString = (value) =>
+    typeof value === "string" &&
+    value.trim().length > 0 &&
+    value.trim().length <= 255;
+
+const isValidRecipe = (data) =>
+    data !== null &&
+    typeof data === "object" &&
+    isNonEmptyString(data.Title) &&
+    isNonEmptyString(data.FileName);
+
 const PORT = process.env.PORT || 3000;
 
 const pool = mysql.createPool({
@@ -21,9 +32,7 @@ const sendJSON = (res, statusCode, data) => {
 };
 
 const server = http.createServer((req, res) => {
-    //✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
     if (req.url === "/health" && req.method === "GET") {
-        //✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨✨
         pool.query("SELECT 1", (err) => {
             if (err) {
                 return sendJSON(res, 503, {
@@ -82,14 +91,14 @@ const server = http.createServer((req, res) => {
             try {
                 const data = JSON.parse(body);
 
-                if (!data.Title || !data.FileName) {
+                if (!isValidRecipe(data)) {
                     return sendJSON(res, 400, {
-                        error: "Pola 'Title; oraz 'FileName' są wymagane",
+                        error: "Pola 'Title' i 'FileName' muszą być niepustymi tekstami (max 255 znaków)",
                     });
                 }
                 pool.query(
                     "INSERT INTO Recipes (Title, FileName) VALUES (?, ?)",
-                    [data.Title, data.FileName],
+                    [data.Title.trim(), data.FileName.trim()],
                     (err, result) => {
                         if (err) {
                             return sendJSON(res, 500, {
