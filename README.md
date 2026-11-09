@@ -126,7 +126,7 @@ Sieci:
 - Odpowiedź `400 Bad Request`:
 ```json
 {
-  "error": "Pola 'Title' oraz 'FileName' są wymagane"
+  "error": "Pola 'Title' i 'FileName' muszą być niepustymi tekstami (max 255 znaków)"
 }
 ```
 ```json
