@@ -3,9 +3,9 @@ INSERT INTO Users (Username, Name, Surname) VALUES
 ('anowak', 'Anna', 'Nowak');
 
 INSERT INTO Recipes (Title, FileName) VALUES
-('Naleśniki', 'nalesniki.pdf'),
-('Spaghetti bolognese', 'spaghetti.pdf'),
-('Szakszuka', 'szakszuka.pdf');
+('Naleśniki', 'nalesniki.md'),
+('Spaghetti bolognese', 'spaghetti.md'),
+('Szakszuka', 'szakszuka.md');
 
 INSERT INTO Ingredients (Name) VALUES
 ('Mąka'),
