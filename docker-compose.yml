@@ -53,6 +53,8 @@ services:
             MYSQL_PASSWORD: ${DB_PASS}
             MYSQL_DATABASE: ${DB_NAME}
             MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+            LANG: C.UTF-8
+            LC_ALL: C.UTF-8
         command:
             - "--character-set-server=utf8mb4"
             - "--collation-server=utf8mb4_unicode_ci"
