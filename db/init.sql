@@ -3,18 +3,18 @@ CREATE TABLE Users (
     Username varchar(50) NOT NULL UNIQUE,
     Name varchar(50),
     Surname varchar(50)
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci; 
 
 CREATE TABLE Recipes (
     RecipeID int PRIMARY KEY AUTO_INCREMENT, 
     Title varchar(255) NOT NULL, 
     FileName varchar(255) NOT NULL
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE Ingredients (
     IngredientID int PRIMARY KEY AUTO_INCREMENT,
     Name varchar(100) NOT NULL UNIQUE
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE RecipeIngredients (
     RecipeID int,
@@ -24,14 +24,14 @@ CREATE TABLE RecipeIngredients (
     PRIMARY KEY (RecipeID, IngredientID),
     FOREIGN KEY (RecipeID) REFERENCES Recipes(RecipeID) ON DELETE CASCADE,
     FOREIGN KEY (IngredientID) REFERENCES Ingredients(IngredientID) ON DELETE CASCADE
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE ShoppingLists (
     ShoppingListID int PRIMARY KEY AUTO_INCREMENT,
     Name varchar(255) NOT NULL DEFAULT 'Lista zakupów',
     UserID int NOT NULL,
     CONSTRAINT fk_UserID FOREIGN KEY (UserID) REFERENCES Users(UserID) ON DELETE CASCADE
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 CREATE TABLE ShoppingListItems (
     ItemID int PRIMARY KEY AUTO_INCREMENT,
@@ -42,7 +42,7 @@ CREATE TABLE ShoppingListItems (
     IsChecked BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (ShoppingListID) REFERENCES ShoppingLists(ShoppingListID) ON DELETE CASCADE,
     FOREIGN KEY (IngredientID) REFERENCES Ingredients(IngredientID) ON DELETE CASCADE
-);
+) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 
 INSERT INTO Users (Username, Name, Surname) VALUES
@@ -120,7 +120,7 @@ INSERT INTO RecipeIngredients (RecipeID, IngredientID, Quantity, Unit) VALUES
 (3, 26, 0.33, 'łyżeczki'),
 (3, 27, 1, 'szczypta'),
 (3, 28, 1, 'szczypta'),
-(3, 29. 1. 'szczypta'),
+(3, 29, 1, 'szczypta'),
 (3, 30, 1, 'szt'),
 (3, 31, 1, 'szt');
 
