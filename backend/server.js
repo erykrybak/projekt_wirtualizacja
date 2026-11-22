@@ -1,6 +1,12 @@
 const http = require("http");
 const mysql = require("mysql2");
 
+const fs = require("fs");
+const path = require("path");
+const md = require("markdown-it")();
+
+const RECIPES_DIR = path.join(__dirname, "recipes");
+
 const isNonEmptyString = (value) =>
     typeof value === "string" &&
     value.trim().length > 0 &&
@@ -57,7 +63,7 @@ const server = http.createServer((req, res) => {
 
     const recipeRouteRegex = /^\/api\/recipes\/(\d+)$/;
     if (req.url === "/api/recipes" && req.method === "GET") {
-        pool.query("SELECT * FROM Recipes", (err, results) => {
+        pool.query("SELECT RecipeID, Title FROM Recipes", (err, results) => {
             if (err) return sendJSON(res, 500, { error: "Błąd bazy danych" });
             return sendJSON(res, 200, results);
         });
@@ -67,18 +73,35 @@ const server = http.createServer((req, res) => {
     if (req.url.match(recipeRouteRegex) && req.method === "GET") {
         const id = req.url.match(recipeRouteRegex)[1];
         pool.query(
-            "SELECT * FROM Recipes WHERE RecipeID = ?",
+            "SELECT RecipeID, Title, FileName FROM Recipes WHERE RecipeID = ?",
             [id],
             (err, results) => {
                 if (err)
                     return sendJSON(res, 500, { error: "Błąd bazy danych" });
 
-                if (results.length === 0)
+                if (results.length === 0) {
                     return sendJSON(res, 404, {
                         error: "Nie znaleziono przepisu",
                     });
+                }
 
-                return sendJSON(res, 200, results[0]);
+                const recipe = results[0];
+                const safeFileName = path.basename(recipe.FileName);
+                const filePath = path.join(RECIPES_DIR, safeFileName);
+
+                fs.readFile(filePath, "utf8", (fileErr, content) => {
+                    if (fileErr) {
+                        return sendJSON(res, 404, {
+                            error: "Nie znaleziono pliku przepisu",
+                        });
+                    }
+
+                    return sendJSON(res, 200, {
+                        RecipeID: recipe.RecipeID,
+                        Title: recipe.Title,
+                        html: md.render(content),
+                    });
+                });
             },
         );
         return;
