@@ -6,78 +6,6 @@ function escapeHtml(str) {
         .replace(/"/g, "&quot;");
 }
 
-function formatInline(text) {
-    let safe = escapeHtml(text);
-    safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-    safe = safe.replace(/\*(.+?)\*/g, "<em>$1</em>");
-    safe = safe.replace(/`(.+?)`/g, "<code>$1</code>");
-    safe = safe.replace(/_(.+?)_/g, "<i>$1</i>");
-    return safe;
-}
-
-function renderMarkdown(md) {
-    const lines = md.replace(/\r\n/g, "\n").split("\n");
-    let html = "";
-    let inUl = false;
-    let inOl = false;
-
-    const closeLists = () => {
-        if (inUl) {
-            html += "</ul>";
-            inUl = false;
-        }
-        if (inOl) {
-            html += "</ol>";
-            inOl = false;
-        }
-    };
-
-    for (const rawLine of lines) {
-        const line = rawLine.trim();
-
-        if (!line) {
-            closeLists();
-            continue;
-        }
-        if (line.startsWith("### ")) {
-            closeLists();
-            html += `<h3>${formatInline(line.slice(4))}</h3>`;
-        } else if (line.startsWith("## ")) {
-            closeLists();
-            html += `<h2>${formatInline(line.slice(3))}</h2>`;
-        } else if (line.startsWith("# ")) {
-            closeLists();
-            html += `<h1>${formatInline(line.slice(2))}</h1>`;
-        } else if (/^[-*]\s+/.test(line)) {
-            if (inOl) {
-                html += "</ol>";
-                inOl = false;
-            }
-            if (!inUl) {
-                html += "<ul>";
-                inUl = true;
-            }
-            html += `<li>${formatInline(line.replace(/^[-*]\s+/, ""))}</li>`;
-        } else if (/^\d+\.\s+/.test(line)) {
-            if (inUl) {
-                html += "</ul>";
-                inUl = false;
-            }
-            if (!inOl) {
-                html += "<ol>";
-                inOl = true;
-            }
-            html += `<li>${formatInline(line.replace(/^\d+\.\s+/, ""))}</li>`;
-        } else {
-            closeLists();
-            html += `<p>${formatInline(line)}</p>`;
-        }
-    }
-
-    closeLists();
-    return html || "<p>Plik przepisu jest pusty.</p>";
-}
-
 function showView(viewId) {
     document
         .querySelectorAll(".view")
@@ -108,17 +36,23 @@ function openRecipe(recipe) {
     contentEl.innerHTML = "<p>Ładowanie przepisu...</p>";
     showView("recipe-detail-view");
 
-    const cleanFile = String(recipe.FileName || "").replace(/^\/+/, "");
-    fetch(`/recipes/${encodeURIComponent(cleanFile)}`)
-        .then((res) => {
-            if (!res.ok) throw new Error("Not found");
-            return res.text();
+    fetch(`/api/recipes/${encodeURIComponent(recipe.RecipeID)}`)
+        .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.error || "Nie udało się pobrać przepisu");
+            }
+            return data;
         })
-        .then((md) => {
-            contentEl.innerHTML = renderMarkdown(md);
+        .then((data) => {
+            if (data.Title) {
+                document.getElementById("detail-title").textContent =
+                    data.Title;
+            }
+            contentEl.innerHTML = data.html || "<p>Przepis nie ma treści.</p>";
         })
-        .catch(() => {
-            contentEl.innerHTML = `<p>Nie znaleziono pliku przepisu (<code>${escapeHtml(cleanFile)}</code>) w katalogu <code>frontend/recipes/</code>.</p>`;
+        .catch((err) => {
+            contentEl.innerHTML = `<p>${escapeHtml(err.message)}</p>`;
         });
 }
 
