@@ -53,6 +53,9 @@ services:
             MYSQL_PASSWORD: ${DB_PASS}
             MYSQL_DATABASE: ${DB_NAME}
             MYSQL_RANDOM_ROOT_PASSWORD: "yes"
+        command:
+            - "--character-set-server=utf8mb4"
+            - "--collation-server=utf8mb4_unicode_ci"
         volumes:
             - mysql-data:/var/lib/mysql
             - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
