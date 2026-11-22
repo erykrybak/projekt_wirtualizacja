@@ -1,3 +1,83 @@
+function escapeHtml(str) {
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+}
+
+function formatInline(text) {
+    let safe = escapeHtml(text);
+    safe = safe.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    safe = safe.replace(/\*(.+?)\*/g, "<em>$1</em>");
+    safe = safe.replace(/`(.+?)`/g, "<code>$1</code>");
+    safe = safe.replace(/_(.+?)_/g, "<i>$1</i>");
+    return safe;
+}
+
+function renderMarkdown(md) {
+    const lines = md.replace(/\r\n/g, "\n").split("\n");
+    let html = "";
+    let inUl = false;
+    let inOl = false;
+
+    const closeLists = () => {
+        if (inUl) {
+            html += "</ul>";
+            inUl = false;
+        }
+        if (inOl) {
+            html += "</ol>";
+            inOl = false;
+        }
+    };
+
+    for (const rawLine of lines) {
+        const line = rawLine.trim();
+
+        if (!line) {
+            closeLists();
+            continue;
+        }
+        if (line.startsWith("### ")) {
+            closeLists();
+            html += `<h3>${formatInline(line.slice(4))}</h3>`;
+        } else if (line.startsWith("## ")) {
+            closeLists();
+            html += `<h2>${formatInline(line.slice(3))}</h2>`;
+        } else if (line.startsWith("# ")) {
+            closeLists();
+            html += `<h1>${formatInline(line.slice(2))}</h1>`;
+        } else if (/^[-*]\s+/.test(line)) {
+            if (inOl) {
+                html += "</ol>";
+                inOl = false;
+            }
+            if (!inUl) {
+                html += "<ul>";
+                inUl = true;
+            }
+            html += `<li>${formatInline(line.replace(/^[-*]\s+/, ""))}</li>`;
+        } else if (/^\d+\.\s+/.test(line)) {
+            if (inUl) {
+                html += "</ul>";
+                inUl = false;
+            }
+            if (!inOl) {
+                html += "<ol>";
+                inOl = true;
+            }
+            html += `<li>${formatInline(line.replace(/^\d+\.\s+/, ""))}</li>`;
+        } else {
+            closeLists();
+            html += `<p>${formatInline(line)}</p>`;
+        }
+    }
+
+    closeLists();
+    return html || "<p>Plik przepisu jest pusty.</p>";
+}
+
 function showView(viewId) {
     document
         .querySelectorAll(".view")
@@ -22,6 +102,26 @@ function setMessage(text, type) {
     msg.className = `message ${type}`;
 }
 
+function openRecipe(recipe) {
+    document.getElementById("detail-title").textContent = recipe.Title;
+    const contentEl = document.getElementById("detail-content");
+    contentEl.innerHTML = "<p>Ładowanie przepisu...</p>";
+    showView("recipe-detail-view");
+
+    const cleanFile = String(recipe.FileName || "").replace(/^\/+/, "");
+    fetch(`/recipes/${encodeURIComponent(cleanFile)}`)
+        .then((res) => {
+            if (!res.ok) throw new Error("Not found");
+            return res.text();
+        })
+        .then((md) => {
+            contentEl.innerHTML = renderMarkdown(md);
+        })
+        .catch(() => {
+            contentEl.innerHTML = `<p>Nie znaleziono pliku przepisu (<code>${escapeHtml(cleanFile)}</code>) w katalogu <code>frontend/recipes/</code>.</p>`;
+        });
+}
+
 function loadRecipes() {
     const list = document.getElementById("recipes-list");
     fetch("/api/recipes")
@@ -35,13 +135,12 @@ function loadRecipes() {
             }
             data.forEach((recipe) => {
                 const li = document.createElement("li");
-                li.className = "recipe-item";
-
-                const titleSpan = document.createElement("span");
-                titleSpan.className = "recipe-title";
-                titleSpan.textContent = `${recipe.RecipeID}. ${recipe.Title}`;
-
-                li.appendChild(titleSpan);
+                const btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "recipe-btn";
+                btn.innerHTML = `<span>${escapeHtml(String(recipe.RecipeID))}. ${escapeHtml(recipe.Title)}</span><span class="recipe-arrow">→</span>`;
+                btn.addEventListener("click", () => openRecipe(recipe));
+                li.appendChild(btn);
                 list.appendChild(li);
             });
         })
