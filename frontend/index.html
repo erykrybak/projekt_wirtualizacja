@@ -2,109 +2,69 @@
 <html lang="pl">
     <head>
         <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>Przepisy i lista zakupów</title>
-        <style>
-            .view {
-                display: none;
-            }
-            .view.active {
-                display: block;
-            }
-        </style>
+        <link rel="stylesheet" href="/style.css" />
     </head>
     <body>
-        <h1>Przepisy i lista zakupów</h1>
+        <div class="container">
+            <header>
+                <h1>Przepisy i lista zakupów</h1>
+            </header>
 
-        <nav>
-            <button type="button" onclick="showView('recipes-view')">
-                Przepisy
-            </button>
-            <button type="button" onclick="showView('add-recipe-view')">
-                Dodaj przepis
-            </button>
-        </nav>
+            <nav>
+                <button
+                    type="button"
+                    class="nav-btn active"
+                    id="btn-recipes"
+                    onclick="showView('recipes-view')"
+                >
+                    Przepisy
+                </button>
+                <button
+                    type="button"
+                    class="nav-btn"
+                    id="btn-add"
+                    onclick="showView('add-recipe-view')"
+                >
+                    Dodaj przepis
+                </button>
+            </nav>
 
-        <section id="recipes-view" class="view active">
-            <h2>Lista przepisów</h2>
-            <ul id="recipes-list"></ul>
-        </section>
+            <section id="recipes-view" class="view active">
+                <h2>Lista przepisów</h2>
+                <ul id="recipes-list" class="recipe-list"></ul>
+            </section>
 
-        <section id="add-recipe-view" class="view">
-            <h2>Dodaj nowy przepis</h2>
-            <form id="add-recipe-form">
-                <input
-                    type="text"
-                    id="title"
-                    placeholder="Tytuł przepisu"
-                    required
-                />
-                <input
-                    type="text"
-                    id="filename"
-                    placeholder="Nazwa pliku (np. zupa.md)"
-                    required
-                />
-                <button type="submit">Zapisz</button>
-            </form>
-            <p id="form-message"></p>
-        </section>
+            <section id="add-recipe-view" class="view">
+                <h2>Dodaj nowy przepis</h2>
+                <form id="add-recipe-form">
+                    <div class="field">
+                        <label for="title">Tytuł przepisu</label>
+                        <input
+                            type="text"
+                            id="title"
+                            placeholder="np. Szakszuka"
+                            required
+                        />
+                    </div>
+                    <div class="field">
+                        <label for="filename">Nazwa pliku</label>
+                        <input
+                            type="text"
+                            id="filename"
+                            placeholder="np. szakszuka.md"
+                            required
+                        />
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        Zapisz przepis
+                    </button>
+                </form>
+                <div id="form-message" class="message"></div>
+            </section>
+        </div>
 
-        <script>
-            function showView(viewId) {
-                document
-                    .querySelectorAll(".view")
-                    .forEach((el) => el.classList.remove("active"));
-                document.getElementById(viewId).classList.add("active");
-                if (viewId === "recipes-view") {
-                    loadRecipes();
-                }
-            }
-
-            function loadRecipes() {
-                const list = document.getElementById("recipes-list");
-                fetch("/api/recipes")
-                    .then((res) => res.json())
-                    .then((data) => {
-                        list.innerHTML = "";
-                        data.forEach((recipe) => {
-                            const li = document.createElement("li");
-                            li.textContent = `${recipe.RecipeID}. ${recipe.Title}`;
-                            list.appendChild(li);
-                        });
-                    })
-                    .catch(() => {
-                        list.innerHTML = "<li>Błąd pobierania przepisów</li>";
-                    });
-            }
-
-            document
-                .getElementById("add-recipe-form")
-                .addEventListener("submit", function (e) {
-                    e.preventDefault();
-                    const Title = document.getElementById("title").value;
-                    const FileName = document.getElementById("filename").value;
-                    const msg = document.getElementById("form-message");
-
-                    fetch("/api/recipes", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ Title, FileName }),
-                    })
-                        .then(async (res) => {
-                            const data = await res.json();
-                            if (!res.ok) {
-                                msg.textContent = data.error || "Błąd zapisu";
-                                return;
-                            }
-                            msg.textContent = data.message || "Dodano przepis";
-                            e.target.reset();
-                        })
-                        .catch(() => {
-                            msg.textContent = "Błąd połączenia z API";
-                        });
-                });
-
-            loadRecipes();
-        </script>
+        <script src="/app.js"></script>
     </body>
 </html>
