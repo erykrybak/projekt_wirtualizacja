@@ -1,3 +1,5 @@
+let currentRecipeId = null;
+
 function escapeHtml(str) {
     return str
         .replace(/&/g, "&amp;")
@@ -30,7 +32,33 @@ function setMessage(text, type) {
     msg.className = `message ${type}`;
 }
 
+function deleteCurrentRecipe() {
+    if (!currentRecipeId) return;
+
+    const title =
+        document.getElementById("detail-title").textContent || "ten przepis";
+    if (!confirm(`Czy na pewno chcesz usunąć przepis „${title}"?`)) {
+        return;
+    }
+
+    fetch(`/api/recipes/${encodeURIComponent(currentRecipeId)}`, {
+        method: "DELETE",
+    })
+        .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                throw new Error(data.error || "Nie udało się usunąć przepisu");
+            }
+            currentRecipeId = null;
+            showView("recipes-view");
+        })
+        .catch((err) => {
+            alert(err.message);
+        });
+}
+
 function openRecipe(recipe) {
+    currentRecipeId = recipe.RecipeID;
     document.getElementById("detail-title").textContent = recipe.Title;
     const contentEl = document.getElementById("detail-content");
     contentEl.innerHTML = "<p>Ładowanie przepisu...</p>";
@@ -85,16 +113,21 @@ function loadRecipes() {
 }
 
 document
+    .getElementById("btn-delete-recipe")
+    .addEventListener("click", deleteCurrentRecipe);
+
+document
     .getElementById("add-recipe-form")
     .addEventListener("submit", function (e) {
         e.preventDefault();
         const Title = document.getElementById("title").value.trim();
         const FileName = document.getElementById("filename").value.trim();
+        const Content = document.getElementById("content").value;
 
         fetch("/api/recipes", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ Title, FileName }),
+            body: JSON.stringify({ Title, FileName, Content }),
         })
             .then(async (res) => {
                 const data = await res.json();

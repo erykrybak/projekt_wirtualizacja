@@ -18,6 +18,23 @@ const isValidRecipe = (data) =>
     isNonEmptyString(data.Title) &&
     isNonEmptyString(data.FileName);
 
+const isValidRecipeFileName = (fileName) => {
+    if (typeof fileName !== "string") return false;
+    const trimmed = fileName.trim();
+    if (!trimmed || trimmed.length > 255) return false;
+    if (trimmed.includes("/") || trimmed.includes("\\")) return false;
+    const base = path.basename(trimmed);
+    return base === trimmed && base.endsWith(".md") && base.length > 3;
+};
+
+const isValidRecipePayload = (data) =>
+    data != null &&
+    typeof data === "object" &&
+    isNonEmptyString(data.Title) &&
+    isValidRecipeFileName(data.fileName) &&
+    typeof data.Content === "string" &&
+    data.Content.trim().length > 0;
+
 const PORT = process.env.PORT || 3000;
 
 const pool = mysql.createPool({
@@ -119,22 +136,36 @@ const server = http.createServer((req, res) => {
                         error: "Pola 'Title' i 'FileName' muszą być niepustymi tekstami (max 255 znaków)",
                     });
                 }
-                pool.query(
-                    "INSERT INTO Recipes (Title, FileName) VALUES (?, ?)",
-                    [data.Title.trim(), data.FileName.trim()],
-                    (err, result) => {
-                        if (err) {
-                            return sendJSON(res, 500, {
-                                error: "Błąd bazy danych",
-                            });
-                        }
 
-                        return sendJSON(res, 201, {
-                            message: "Utworzono przepis",
-                            id: result.insertId,
+                const title = data.Title.trim();
+                const safeFileName = path.basename(data.FileName.trim());
+                const filePath = path.join(RECIPES_DIR, safeFileName);
+
+                fs.writeFile(filePath, data.Content, "utf8", (writeErr) => {
+                    if (writeErr) {
+                        return sendJSON(res, 500, {
+                            error: "Nie udało się zapisać pliku przepisu",
                         });
-                    },
-                );
+                    }
+
+                    pool.query(
+                        "INSERT INTO Recipes (Title, FileName) VALUES (?, ?)",
+                        [title, safeFileName],
+                        (err, result) => {
+                            if (err) {
+                                fs.unlink(filePath, () => {});
+                                return sendJSON(res, 500, {
+                                    error: "Błąd bazy danych",
+                                });
+                            }
+
+                            return sendJSON(res, 201, {
+                                message: "Utworzono przepis i plik Markdown",
+                                id: result.insertId,
+                            });
+                        },
+                    );
+                });
             } catch (e) {
                 return sendJSON(res, 400, {
                     error: "Nieprawidłowy format JSON",
@@ -146,21 +177,47 @@ const server = http.createServer((req, res) => {
 
     if (req.url.match(recipeRouteRegex) && req.method === "DELETE") {
         const id = req.url.match(recipeRouteRegex)[1];
+
         pool.query(
-            "DELETE FROM Recipes WHERE RecipeID = ?",
+            "SELECT FileName FROM Recipes WHERE RecipeID = ?",
             [id],
-            (err, result) => {
-                if (err)
+            (selectErr, rows) => {
+                if (selectErr) {
                     return sendJSON(res, 500, { error: "Błąd bazy danych" });
-                if (result.affectedRows === 0) {
+                }
+                if (rows.length === 0) {
                     return sendJSON(res, 404, {
                         error: "Nie znaleziono przepisu do usunięcia",
                     });
                 }
 
-                return sendJSON(res, 200, {
-                    message: "Przepis został usunięty",
-                });
+                const safeFileName = path.basename(rows[0].FileName || "");
+                const filePath = path.join(RECIPES_DIR, safeFileName);
+
+                pool.query(
+                    "DELETE FROM Recipes WHERE RecipeID = ?",
+                    [id],
+                    (delErr, result) => {
+                        if (delErr) {
+                            return sendJSON(res, 500, {
+                                error: "Błąd bazy danych",
+                            });
+                        }
+                        if (result.affectedRows === 0) {
+                            return sendJSON(res, 404, {
+                                error: "Nie znaleziono przepisu do usunięcia",
+                            });
+                        }
+
+                        if (safeFileName.endsWith(".md")) {
+                            fs.unlink(filePath, () => {});
+                        }
+
+                        return sendJSON(res, 200, {
+                            message: "Przepis został usunięty",
+                        });
+                    },
+                );
             },
         );
         return;

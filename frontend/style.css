@@ -131,6 +131,14 @@ nav {
     font-weight: 400;
 }
 
+.detail-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+}
+
 .back-btn {
     background: #eef1f5;
     color: var(--text);
@@ -140,11 +148,30 @@ nav {
     font-size: 0.9rem;
     font-weight: 600;
     cursor: pointer;
-    margin-bottom: 1.25rem;
+}
+
+.detail-actions .back-btn {
+    margin-bottom: 0;
 }
 
 .back-btn:hover {
     background: #e2e6ec;
+}
+
+.danger-btn {
+    background: var(--danger-bg);
+    color: var(--danger-text);
+    border: 1px solid #f3c2c2;
+    padding: 0.45rem 0.9rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.danger-btn:hover {
+    background: #fad6d6;
 }
 
 .md-content h1,
@@ -194,16 +221,25 @@ label {
     font-weight: 600;
 }
 
-input {
+input,
+textarea {
     width: 100%;
     padding: 0.65rem 0.8rem;
     border: 1px solid var(--border);
     border-radius: 8px;
     font-size: 0.95rem;
     background: #fff;
+    color: var(--text);
 }
 
-input:focus {
+textarea {
+    font-family:
+        ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    resize: vertical;
+}
+
+input:focus,
+textarea:focus {
     outline: none;
     border-color: var(--accent);
     box-shadow: 0 0 0 3px rgba(47, 111, 78, 0.15);

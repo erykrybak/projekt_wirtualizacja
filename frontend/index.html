@@ -37,13 +37,22 @@
             </section>
 
             <section id="recipe-detail-view" class="view">
-                <button
-                    type="button"
-                    class="back-btn"
-                    onclick="showView('recipes-view')"
-                >
-                    ← Wróć do przepisów
-                </button>
+                <div class="detail-actions">
+                    <button
+                        type="button"
+                        class="back-btn"
+                        onclick="showView('recipes-view')"
+                    >
+                        ← Wróć do przepisów
+                    </button>
+                    <button
+                        type="button"
+                        class="danger-btn"
+                        id="btn-delete-recipe"
+                    >
+                        Usuń przepis
+                    </button>
+                </div>
                 <h2 id="detail-title"></h2>
                 <div id="detail-content" class="md-content"></div>
             </section>
@@ -68,6 +77,15 @@
                             placeholder="np. szakszuka.md"
                             required
                         />
+                    </div>
+                    <div class="field">
+                        <label for="content">Treść przepisu (Markdown)</label>
+                        <textarea
+                            id="content"
+                            rows="10"
+                            placeholder="# Szakszuka&#10;&#10;## Składniki&#10;- 3 jajka&#10;- łyżka masła&#10;&#10;## Przygotowanie&#10;1. Roztop masło na patelni..."
+                            required
+                        ></textarea>
                     </div>
                     <button type="submit" class="submit-btn">
                         Zapisz przepis
