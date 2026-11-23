@@ -4,6 +4,7 @@ WORKDIR /site
 COPY index.html style.css app.js ./
 RUN htmlhint index.html
 
-FROM nginx:alpine
+FROM nginx/nginx-unprivileged
 COPY --from=lint /site/ /usr/share/nginx/html/
-EXPOSE 80
+COPY ./nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 8080
